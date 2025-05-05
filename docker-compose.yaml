@@ -1,0 +1,162 @@
+version: '3.8'
+
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    restart: unless-stopped
+    environment:
+      - CLOUDFLARE_DNS_API_TOKEN=${CLOUDFLARE_DNS_API_TOKEN}
+    volumes:
+      - ./config/traefik.yaml:/etc/traefik/traefik.yaml
+      - ./letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - pihole_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`${TRAEFIK_WEB}`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.tls.certresolver=cloudflare"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_AUTH_USERPASS}"
+
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    hostname: pihole
+    restart: unless-stopped
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    networks:
+      - pihole_net
+    environment:
+      TZ: "America/New_York"
+      WEBPASSWORD: ${WEBPASSWORD}
+      DNSMASQ_USER: root
+      DNSMASQ_LISTENING: all
+    volumes:
+      - ./etc-pihole:/etc/pihole
+      - ./etc-dnsmasq.d:/etc/dnsmasq.d
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pihole.rule=Host(`${PIHOLE_WEB}`)"
+      - "traefik.http.routers.pihole.entrypoints=websecure"
+      - "traefik.http.routers.pihole.tls=true"
+      - "traefik.http.routers.pihole.tls.certresolver=cloudflare"
+      - "traefik.http.services.pihole.loadbalancer.server.port=80"
+    dns:
+      - 208.67.222.222
+      - 208.67.220.220
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    networks:
+      - pihole_net
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`${PROMETHEUS_WEB}`)"
+      - "traefik.http.routers.prometheus.entrypoints=websecure"
+      - "traefik.http.routers.prometheus.tls=true"
+      - "traefik.http.routers.prometheus.tls.certresolver=cloudflare"
+      - "traefik.http.routers.prometheus.middlewares=prometheus-auth"
+      - "traefik.http.middlewares.prometheus-auth.basicauth.users=${TRAEFIK_AUTH_USERPASS}"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+      
+  mywebsite:
+    image: nginx:alpine
+    container_name: mywebsite
+    restart: unless-stopped
+    volumes:
+      - ./mywebsite:/usr/share/nginx/html:ro
+    networks:
+      - pihole_net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mywebsite.rule=Host(`${WEBSITE_WEB}`)"
+      - "traefik.http.routers.mywebsite.entrypoints=websecure"
+      - "traefik.http.routers.mywebsite.tls=true"
+      - "traefik.http.routers.mywebsite.tls.certresolver=cloudflare"
+      - "traefik.http.services.mywebsite.loadbalancer.server.port=80"
+
+  netdata:
+    image: netdata/netdata:latest
+    container_name: netdata
+    restart: unless-stopped
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - apparmor:unconfined
+    networks:
+      - pihole_net
+    volumes:
+      - ./netdata-config/go.d/logs.conf:/etc/netdata/go.d/logs.conf:ro
+      - /var/log:/host/var/log:ro
+      - netdata-lib:/var/lib/netdata
+      - netdata-cache:/var/cache/netdata
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc/os-release:/host/etc/os-release:ro
+    environment:
+      - DO_NOT_TRACK=1
+      - NETDATA_CLAIM_TOKEN=${NETDATA_CLAIM_TOKEN} 
+      - NETDATA_CLAIM_URL=https://app.netdata.cloud
+      - NETDATA_CLAIM_ROOMS=07961d4a-fdd5-4dce-bf16-9a9b40ca57c0
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.netdata.rule=Host(`${NETDATA_WEB}`)"
+      - "traefik.http.routers.netdata.entrypoints=websecure"
+      - "traefik.http.routers.netdata.tls=true"
+      - "traefik.http.routers.netdata.tls.certresolver=cloudflare"
+      - "traefik.http.services.netdata.loadbalancer.server.port=19999"
+      - "traefik.http.routers.netdata.middlewares=netdata-auth"
+      - "traefik.http.middlewares.netdata-auth.basicauth.users=${TRAEFIK_AUTH_USERPASS}"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    networks:
+      - pihole_net
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+      - GF_METRICS_ENABLED=true
+      - GF_METRICS_ENDPOINT_ENABLED=true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`${GRAFANA_WEB}`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls=true"
+      - "traefik.http.routers.grafana.tls.certresolver=cloudflare"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    network_mode: host
+    restart: unless-stopped
+
+volumes:
+  grafana-storage:
+  netdata-lib:
+  netdata-cache:
+
+networks:
+  pihole_net:
+    driver: bridge
+
