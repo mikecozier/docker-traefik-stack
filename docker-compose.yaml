@@ -119,7 +119,7 @@ services:
       - /etc/os-release:/host/etc/os-release:ro
     environment:
       - DO_NOT_TRACK=1
-      - NETDATA_CLAIM_TOKEN=${NETDATA_CLAIM_TOKEN}
+      - NETDATA_CLAIM_TOKEN=${NETDATA_CLAIM_TOKEN} 
       - NETDATA_CLAIM_URL=https://app.netdata.cloud
       - NETDATA_CLAIM_ROOMS=07961d4a-fdd5-4dce-bf16-9a9b40ca57c0
     labels:
@@ -131,6 +131,26 @@ services:
       - "traefik.http.services.netdata.loadbalancer.server.port=19999"
       - "traefik.http.routers.netdata.middlewares=netdata-auth"
       - "traefik.http.middlewares.netdata-auth.basicauth.users=${TRAEFIK_AUTH_USERPASS}"
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    command: -H unix:///var/run/docker.sock
+    networks:
+      - pihole_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-data:/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portainer.rule=Host(`${PORTAINER_WEB}`)"
+      - "traefik.http.routers.portainer.entrypoints=websecure"
+      - "traefik.http.routers.portainer.tls=true"
+      - "traefik.http.routers.portainer.tls.certresolver=cloudflare"
+      #      - "traefik.http.routers.portainer.middlewares=portainer-auth"
+      #      - "traefik.http.middlewares.portainer-auth.basicauth.users=${TRAEFIK_AUTH_USERPASS}"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 
   grafana:
     image: grafana/grafana:latest
@@ -168,7 +188,8 @@ volumes:
   grafana-storage:
   netdata-lib:
   netdata-cache:
-
+  portainer-data:
 networks:
   pihole_net:
     driver: bridge
+
