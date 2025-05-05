@@ -31,8 +31,8 @@ This Docker Compose stack sets up a **secure and observable home server** infras
 ### 1. Clone this repository
 
 ```bash
-git clone https://github.com/yourusername/devops-stack.git
-cd devops-stack
+git clone https://github.com/mikecozier/docker-traefik-stack.git
+cd docker-traefik-stack
 ````
 
 ### 2. Create a `.env` file
