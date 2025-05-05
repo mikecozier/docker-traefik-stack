@@ -148,8 +148,6 @@ services:
       - "traefik.http.routers.portainer.entrypoints=websecure"
       - "traefik.http.routers.portainer.tls=true"
       - "traefik.http.routers.portainer.tls.certresolver=cloudflare"
-      #      - "traefik.http.routers.portainer.middlewares=portainer-auth"
-      #      - "traefik.http.middlewares.portainer-auth.basicauth.users=${TRAEFIK_AUTH_USERPASS}"
       - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 
   grafana:
