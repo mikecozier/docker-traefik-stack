@@ -12,6 +12,7 @@ services:
     ports:
       - "80:80"
       - "443:443"
+     # - "8006:8006"
     networks:
       - pihole_net
     labels:
@@ -96,6 +97,11 @@ services:
       - "traefik.http.routers.mywebsite.tls=true"
       - "traefik.http.routers.mywebsite.tls.certresolver=cloudflare"
       - "traefik.http.services.mywebsite.loadbalancer.server.port=80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   netdata:
     image: netdata/netdata:latest
@@ -131,6 +137,11 @@ services:
       - "traefik.http.services.netdata.loadbalancer.server.port=19999"
       - "traefik.http.routers.netdata.middlewares=netdata-auth"
       - "traefik.http.middlewares.netdata-auth.basicauth.users=${TRAEFIK_AUTH_USERPASS}"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:19999/api/v1/info"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   portainer:
     image: portainer/portainer-ce:latest
@@ -148,6 +159,8 @@ services:
       - "traefik.http.routers.portainer.entrypoints=websecure"
       - "traefik.http.routers.portainer.tls=true"
       - "traefik.http.routers.portainer.tls.certresolver=cloudflare"
+      - "traefik.http.routers.portainer.middlewares=portainer-auth"
+      - "traefik.http.middlewares.portainer-auth.basicauth.users=${TRAEFIK_AUTH_USERPASS}"
       - "traefik.http.services.portainer.loadbalancer.server.port=9000"
 
   grafana:
@@ -187,6 +200,7 @@ volumes:
   netdata-lib:
   netdata-cache:
   portainer-data:
+
 networks:
   pihole_net:
     driver: bridge
