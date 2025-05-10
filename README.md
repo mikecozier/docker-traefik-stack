@@ -11,14 +11,14 @@ A secure and observable home server setup using Docker Compose with:
 
 ### 📦 **Services Included:**
 
-| Service     | URL                          | Purpose                          |
-| ----------- | ---------------------------- | -------------------------------- |
-| Traefik     | https\://\${TRAEFIK\_WEB}    | Reverse proxy + Dashboard (auth) |
-| Pi-hole     | https\://\${PIHOLE\_WEB}     | DNS filtering and ad-blocking    |
-| Prometheus  | https\://\${PROMETHEUS\_WEB} | Metrics scraping                 |
-| Grafana     | https\://\${GRAFANA\_WEB}    | Metrics dashboard                |
-| Netdata     | https\://\${NETDATA\_WEB}    | Real-time system health          |
-| Static Site | https\://\${WEBSITE\_WEB}    | NGINX-hosted site                |
+| Service     | URL                            | Purpose                          |
+| ----------- | ------------------------------ | -------------------------------- |
+| Traefik     | https://traefik.example.com    | Reverse proxy + Dashboard (auth) |
+| Pi-hole     | https://pihole.example.com     | DNS filtering and ad-blocking    |
+| Prometheus  | https://prometheus.example.com | Metrics scraping                 |
+| Grafana     | https://grafana..example.com   | Metrics dashboard                |
+| Netdata     | https://netdata.example.com    | Real-time system health          |
+| Static Site | https://example.com            | NGINX-hosted site                |
 
 ### 🚀 **Quick Start:**
 
