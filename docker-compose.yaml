@@ -7,12 +7,17 @@ services:
       - CLOUDFLARE_DNS_API_TOKEN=${CLOUDFLARE_DNS_API_TOKEN}
     volumes:
       - ./config/traefik.yaml:/etc/traefik/traefik.yaml
+      - ./config/proxmox.yml:/etc/traefik/dynamic/proxmox.yml
       - ./letsencrypt:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./certs:/etc/traefik/certs
+    command:
+      - --entryPoints.web.address=:80
+      - --entryPoints.websecure.address=:443
+      - --serversTransport.insecureSkipVerify=true
     ports:
       - "80:80"
       - "443:443"
-     # - "8006:8006"
     networks:
       - pihole_net
     labels:
