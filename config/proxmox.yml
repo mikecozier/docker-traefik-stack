@@ -1,0 +1,32 @@
+http:
+  routers:
+    proxmox:
+      entryPoints:
+        - websecure
+      rule: "Host(`proxmox.example.com`)"
+      middlewares:
+        - default-headers
+        - https-redirectscheme
+        - ratelimit
+      tls:
+        certResolver: cloudflare
+      service: proxmox
+
+  services:
+    proxmox:
+      loadBalancer:
+        servers:
+          - url: "https://192.168.0.100:8006"  # EXAMPLE ONLY
+        passHostHeader: true
+        serversTransport: proxmox-transport
+
+  serversTransports:
+    proxmox-transport:
+      # For homelabs, many people use self-signed certs:
+      insecureSkipVerify: true
+
+      # Optional: if you have an internal CA, mount it into Traefik and enable this instead:
+      # rootCAs:
+      #   - /etc/traefik/certs/proxmox-ca.pem
+      # serverName: "proxmox.local"
+

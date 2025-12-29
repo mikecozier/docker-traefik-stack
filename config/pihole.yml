@@ -1,0 +1,30 @@
+http:
+  routers:
+    pihole:
+      entryPoints:
+        - websecure
+      rule: "Host(`pihole.example.com`)"
+      tls:
+        certResolver: cloudflare
+      middlewares:
+        - ratelimit
+        - default-headers
+        # Optional (recommended) for public templates:
+        - pihole-auth
+      service: pihole
+
+  services:
+    pihole:
+      loadBalancer:
+        servers:
+          - url: "http://pihole:80"
+        passHostHeader: true
+
+  middlewares:
+    # Optional (recommended): Basic Auth in front of Pi-hole UI
+    # Replace hash before deploying. Note $$ escaping is intentional.
+    pihole-auth:
+      basicAuth:
+        users:
+          - "admin:$$2y$$10$$REPLACE_WITH_BCRYPT_HASH"
+

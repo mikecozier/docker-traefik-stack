@@ -1,0 +1,70 @@
+http:
+  middlewares:
+
+    # -------------------------
+    # Basic Auth (templates)
+    # -------------------------
+    traefik-auth:
+      basicAuth:
+        # Generate with:
+        # htpasswd -nbB admin 'StrongPassword' | sed 's/\$/\$\$/g'
+        users:
+          - "admin:$$2y$$10$$REPLACE_WITH_BCRYPT_HASH"
+
+    grafana-auth:
+      basicAuth:
+        users:
+          - "admin:$$2y$$10$$REPLACE_WITH_BCRYPT_HASH"
+
+    prometheus-auth:
+      basicAuth:
+        users:
+          - "admin:$$2y$$10$$REPLACE_WITH_BCRYPT_HASH"
+
+    pihole-auth:
+      basicAuth:
+        users:
+          - "admin:$$2y$$10$$REPLACE_WITH_BCRYPT_HASH"
+
+    # -------------------------
+    # Security Headers
+    # -------------------------
+    default-headers:
+      headers:
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        sslRedirect: true
+        forceSTSHeader: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        referrerPolicy: "no-referrer"
+        permissionsPolicy: "geolocation=(), microphone=(), camera=()"
+
+    # -------------------------
+    # HTTPS redirect
+    # -------------------------
+    https-redirectscheme:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+    # -------------------------
+    # Rate limiting
+    # -------------------------
+    ratelimit:
+      rateLimit:
+        average: 50
+        burst: 100
+
+    # -------------------------
+    # Optional IP allowlist (template)
+    # -------------------------
+    portainer-allowlist:
+      ipAllowList:
+        sourceRange:
+          # Example only — replace locally
+          - "192.168.0.0/24"
+          - "203.0.113.0/24"
+

@@ -1,0 +1,83 @@
+auth_enabled: false  # NOTE: Do not expose Loki directly to the Internet without auth/proxy controls.
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+  http_server_read_timeout: 600s
+  http_server_write_timeout: 600s
+
+common:
+  path_prefix: /loki
+  replication_factor: 1
+  ring:
+    instance_addr: 0.0.0.0
+    kvstore:
+      store: inmemory
+
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /loki/index
+    cache_location: /loki/index_cache
+    shared_store: filesystem
+  filesystem:
+    directory: /loki/chunks
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: boltdb-shipper
+      object_store: filesystem
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h
+
+query_range:
+  results_cache:
+    cache:
+      embedded_cache:
+        enabled: true
+        max_size_mb: 100
+
+# More portable defaults (avoid pegging small hosts)
+querier:
+  max_concurrent: 32
+
+query_scheduler:
+  max_outstanding_requests_per_tenant: 256
+
+ruler:
+  storage:
+    type: local
+    local:
+      directory: /loki/rules
+  rule_path: /loki/rules-temp
+  enable_alertmanager_v2: false
+
+compactor:
+  working_directory: /loki/retention
+  shared_store: filesystem
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 25
+
+limits_config:
+  retention_period: 180d
+  max_query_series: 100000
+
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h  # 7 days
+
+  ingestion_rate_mb: 16
+  ingestion_burst_size_mb: 32
+
+ingester:
+  lifecycler:
+    ring:
+      kvstore:
+        store: inmemory
+      replication_factor: 1
+  chunk_idle_period: 5m
+  chunk_retain_period: 30s
+

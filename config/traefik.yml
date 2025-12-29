@@ -1,0 +1,13 @@
+http:
+  routers:
+    traefik:
+      entryPoints:
+        - websecure
+      rule: "Host(`traefik.example.com`)"
+      service: api@internal
+      tls:
+        certResolver: cloudflare
+      middlewares:
+        - ratelimit
+        - traefik-auth
+

@@ -1,0 +1,27 @@
+global:
+  scrape_interval: 1m
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Scrape node_exporter running as a container in this stack
+  - job_name: "node_exporter"
+    static_configs:
+      - targets: ["node_exporter:9100"]
+        labels:
+          host: "docker-host"
+
+  # Optional: scrape additional node_exporters on your LAN/VPC
+  # Copy/paste blocks and replace with your own IPs/hosts locally (do not commit real IPs)
+  #
+  # - job_name: "node_exporter_extra"
+  #   static_configs:
+  #     - targets: ["192.168.0.10:9100"]
+  #       labels:
+  #         host: "server1"
+  #     - targets: ["192.168.0.11:9100"]
+  #       labels:
+  #         host: "server2"
+

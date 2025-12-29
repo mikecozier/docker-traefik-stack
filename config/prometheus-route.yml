@@ -1,0 +1,29 @@
+http:
+  routers:
+    prometheus:
+      entryPoints:
+        - websecure
+      rule: "Host(`prometheus.example.com`)"
+      service: prometheus
+      tls:
+        certResolver: cloudflare
+      middlewares:
+        - ratelimit
+        - default-headers
+        - prometheus-auth
+
+  services:
+    prometheus:
+      loadBalancer:
+        servers:
+          - url: "http://prometheus:9090"
+        passHostHeader: true
+
+  middlewares:
+    # Basic auth (recommended for public templates)
+    # Replace before deploying. Note $$ escaping is intentional.
+    prometheus-auth:
+      basicAuth:
+        users:
+          - "admin:$$2y$$10$$REPLACE_WITH_BCRYPT_HASH"
+

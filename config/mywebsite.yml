@@ -1,0 +1,20 @@
+http:
+  routers:
+    mywebsite:
+      entryPoints:
+        - websecure
+      rule: "Host(`example.com`)"
+      tls:
+        certResolver: cloudflare
+      service: mywebsite
+      middlewares:
+        - ratelimit
+        - default-headers
+
+  services:
+    mywebsite:
+      loadBalancer:
+        servers:
+          - url: "http://mywebsite:80"
+        passHostHeader: true
+
